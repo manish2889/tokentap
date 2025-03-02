@@ -74,24 +74,64 @@ const switchToCorrectNetwork = async () => {
 function App() {
     const [balance, setBalance] = useState('0');
     const [address, setAddress] = useState('');
-    const [isLoading, setIsLoading] = useState(true);
+    const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState('');
     const [contractBalance, setContractBalance] = useState('0');
     const [isRequesting, setIsRequesting] = useState(false);
     const [lastRequestTime, setLastRequestTime] = useState(null);
     const [cooldownTime, setCooldownTime] = useState(0);
+    const [isConnected, setIsConnected] = useState(false);
+    const [isWrongNetwork, setIsWrongNetwork] = useState(false);
 
-    const fetchAddressAndBalance = useCallback(async () => {
+    const connectWallet = async () => {
         try {
+            setIsLoading(true);
+            setError('');
+
             if (!window.ethereum) {
                 throw new Error('Please install MetaMask to use this app');
             }
+
+            // Request account access
+            await window.ethereum.request({ method: 'eth_requestAccounts' });
+            
+            const provider = new ethers.BrowserProvider(window.ethereum);
+            const network = await provider.getNetwork();
+            
+            if (network.chainId !== EXPECTED_CHAIN_ID) {
+                setIsWrongNetwork(true);
+                throw new Error('Please switch to Holesky testnet');
+            }
+
+            const signer = await provider.getSigner();
+            const userAddress = await signer.getAddress();
+            setAddress(userAddress);
+            setIsConnected(true);
+            setIsWrongNetwork(false);
+
+            await fetchAddressAndBalance();
+        } catch (error) {
+            console.error("Connection error:", error);
+            setError(error.message || 'Failed to connect wallet');
+            setIsConnected(false);
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
+    const fetchAddressAndBalance = useCallback(async () => {
+        if (!isConnected) return;
+        
+        try {
+            setIsLoading(true);
+            setError('');
 
             const provider = new ethers.BrowserProvider(window.ethereum);
             const network = await provider.getNetwork();
             
             if (network.chainId !== EXPECTED_CHAIN_ID) {
-                await switchToCorrectNetwork();
+                setIsWrongNetwork(true);
+                throw new Error('Please switch to Holesky testnet');
             }
 
             const signer = await provider.getSigner();
@@ -108,18 +148,17 @@ function App() {
             setBalance(userBalance);
             setContractBalance(contractBalanceValue);
             setError('');
+            setIsWrongNetwork(false);
         } catch (error) {
             console.error("Error:", error);
             setError(error.message || 'An unexpected error occurred');
         } finally {
             setIsLoading(false);
         }
-    }, []);
+    }, [isConnected]);
 
     useEffect(() => {
-        fetchAddressAndBalance();
-        
-        if (window.ethereum) {
+        if (window.ethereum && isConnected) {
             window.ethereum.on('chainChanged', () => window.location.reload());
             window.ethereum.on('accountsChanged', () => window.location.reload());
         }
@@ -130,7 +169,7 @@ function App() {
                 window.ethereum.removeListener('accountsChanged', () => {});
             }
         };
-    }, [fetchAddressAndBalance]);
+    }, [isConnected]);
 
     useEffect(() => {
         let timer;
@@ -143,6 +182,11 @@ function App() {
     }, [cooldownTime]);
 
     const requestTokens = async () => {
+        if (!isConnected) {
+            setError('Please connect your wallet first');
+            return;
+        }
+
         setIsRequesting(true);
         setError('');
         try {
@@ -174,10 +218,23 @@ function App() {
         return `${minutes}:${remainingSeconds.toString().padStart(2, '0')}`;
     };
 
-    if (isLoading) {
+    const switchNetwork = async () => {
+        try {
+            setIsLoading(true);
+            await switchToCorrectNetwork();
+            await fetchAddressAndBalance();
+        } catch (error) {
+            console.error("Error switching network:", error);
+            setError(error.message || 'Failed to switch network');
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
+    if (isLoading && !isConnected) {
         return (
             <div className="flex items-center justify-center min-h-screen bg-gradient-to-r from-primary-600 to-primary-800">
-                <div className="text-3xl font-bold text-white">Loading...</div>
+                <div className="text-3xl font-bold text-white">Connecting...</div>
             </div>
         );
     }
@@ -197,40 +254,62 @@ function App() {
                             </div>
                         )}
 
-                        <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
-                            <div className="bg-primary-50 rounded-xl p-6">
-                                <h2 className="text-lg font-semibold text-primary-900 mb-2">Your Address</h2>
-                                <p className="text-sm text-primary-700 break-all font-mono">{address}</p>
+                        {!isConnected ? (
+                            <div className="text-center">
+                                <button
+                                    onClick={connectWallet}
+                                    className="inline-flex items-center px-6 py-3 border border-transparent text-base font-medium rounded-md text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500"
+                                >
+                                    Connect MetaMask
+                                </button>
                             </div>
-                            <div className="bg-primary-50 rounded-xl p-6">
-                                <h2 className="text-lg font-semibold text-primary-900 mb-2">Your Balance</h2>
-                                <p className="text-3xl font-bold text-primary-600">{balance} Tokens</p>
+                        ) : isWrongNetwork ? (
+                            <div className="text-center">
+                                <button
+                                    onClick={switchNetwork}
+                                    className="inline-flex items-center px-6 py-3 border border-transparent text-base font-medium rounded-md text-white bg-yellow-600 hover:bg-yellow-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-yellow-500"
+                                >
+                                    Switch to Holesky Network
+                                </button>
                             </div>
-                        </div>
+                        ) : (
+                            <>
+                                <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
+                                    <div className="bg-primary-50 rounded-xl p-6">
+                                        <h2 className="text-lg font-semibold text-primary-900 mb-2">Your Address</h2>
+                                        <p className="text-sm text-primary-700 break-all font-mono">{address}</p>
+                                    </div>
+                                    <div className="bg-primary-50 rounded-xl p-6">
+                                        <h2 className="text-lg font-semibold text-primary-900 mb-2">Your Balance</h2>
+                                        <p className="text-3xl font-bold text-primary-600">{balance} TAP</p>
+                                    </div>
+                                </div>
 
-                        <div className="mt-6 bg-primary-50 rounded-xl p-6">
-                            <h2 className="text-lg font-semibold text-primary-900 mb-2">Contract Balance</h2>
-                            <p className="text-2xl font-semibold text-primary-600">{contractBalance} Tokens</p>
-                        </div>
+                                <div className="mt-6 bg-primary-50 rounded-xl p-6">
+                                    <h2 className="text-lg font-semibold text-primary-900 mb-2">Contract Balance</h2>
+                                    <p className="text-2xl font-semibold text-primary-600">{contractBalance} TAP</p>
+                                </div>
 
-                        <div className="mt-8">
-                            <button
-                                onClick={requestTokens}
-                                disabled={isRequesting || cooldownTime > 0}
-                                className={`w-full flex justify-center py-4 px-6 border border-transparent rounded-xl shadow-sm text-lg font-medium text-white transition-all duration-200 ${
-                                    isRequesting || cooldownTime > 0
-                                        ? 'bg-primary-400 cursor-not-allowed'
-                                        : 'bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500'
-                                }`}
-                            >
-                                {isRequesting ? 'Requesting...' : cooldownTime > 0 ? `Try again in ${formatCooldownTime(cooldownTime)}` : 'Request Tokens'}
-                            </button>
-                        </div>
+                                <div className="mt-8">
+                                    <button
+                                        onClick={requestTokens}
+                                        disabled={isRequesting || cooldownTime > 0}
+                                        className={`w-full flex justify-center py-4 px-6 border border-transparent rounded-xl shadow-sm text-lg font-medium text-white transition-all duration-200 ${
+                                            isRequesting || cooldownTime > 0
+                                                ? 'bg-primary-400 cursor-not-allowed'
+                                                : 'bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500'
+                                        }`}
+                                    >
+                                        {isRequesting ? 'Requesting...' : cooldownTime > 0 ? `Try again in ${formatCooldownTime(cooldownTime)}` : 'Request Tokens'}
+                                    </button>
+                                </div>
 
-                        {lastRequestTime && (
-                            <div className="mt-4 text-center text-sm text-primary-600">
-                                Last request: {lastRequestTime}
-                            </div>
+                                {lastRequestTime && (
+                                    <div className="mt-4 text-center text-sm text-primary-600">
+                                        Last request: {lastRequestTime}
+                                    </div>
+                                )}
+                            </>
                         )}
                     </div>
                 </div>
