@@ -1,70 +1,142 @@
-# Getting Started with Create React App
+# TokenTap - Web3 Token Faucet
 
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+TokenTap is a modern Web3 faucet application that allows users to request test tokens on the Holesky testnet. Built with React, Vite, and Ethereum smart contracts, it provides a seamless way to distribute test tokens for development and testing purposes.
 
-## Available Scripts
+## Features
 
-In the project directory, you can run:
+- 🌊 Request 100 TAP tokens every hour
+- 💰 Track your token balance
+- ⚡ Real-time updates
+- 🎨 Modern UI with Tailwind CSS
+- 🔒 Secure smart contract integration
+- ⛓️ Holesky testnet support
 
-### `npm start`
+## Live Demo
 
-Runs the app in the development mode.\
-Open [http://localhost:3000](http://localhost:3000) to view it in your browser.
+Contract Address (Holesky): \`${CONTRACT_ADDRESS}\`
 
-The page will reload when you make changes.\
-You may also see any lint errors in the console.
+## Prerequisites
 
-### `npm test`
+- Node.js (v16+ recommended)
+- MetaMask wallet
+- Some Holesky ETH for gas fees
 
-Launches the test runner in the interactive watch mode.\
-See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more information.
+## Project Structure
 
-### `npm run build`
+\`\`\`
+tokentap/
+├── src/                    # Frontend React application
+├── contracts/             # Smart contract files
+│   ├── contracts/        # Solidity contract source
+│   ├── scripts/          # Deployment and management scripts
+│   └── test/            # Contract test files
+├── public/               # Static assets
+└── package.json         # Project dependencies
+\`\`\`
 
-Builds the app for production to the `build` folder.\
-It correctly bundles React in production mode and optimizes the build for the best performance.
+## Quick Start
 
-The build is minified and the filenames include the hashes.\
-Your app is ready to be deployed!
+1. Clone the repository:
+   \`\`\`bash
+   git clone <repository-url>
+   cd tokentap
+   \`\`\`
 
-See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
+2. Install dependencies:
+   \`\`\`bash
+   # Install frontend dependencies
+   npm install
 
-### `npm run eject`
+   # Install smart contract dependencies
+   cd contracts
+   npm install
+   \`\`\`
 
-**Note: this is a one-way operation. Once you `eject`, you can't go back!**
+3. Configure environment:
+   - Create \`.env\` file in the \`contracts\` directory
+   - Add your private key: \`PRIVATE_KEY=your_private_key_here\`
 
-If you aren't satisfied with the build tool and configuration choices, you can `eject` at any time. This command will remove the single build dependency from your project.
+4. Deploy the contract (if needed):
+   \`\`\`bash
+   cd contracts
+   npm run deploy
+   \`\`\`
 
-Instead, it will copy all the configuration files and the transitive dependencies (webpack, Babel, ESLint, etc) right into your project so you have full control over them. All of the commands except `eject` will still work, but they will point to the copied scripts so you can tweak them. At this point you're on your own.
+5. Start the development server:
+   \`\`\`bash
+   # From the root directory
+   npm run dev
+   \`\`\`
 
-You don't have to ever use `eject`. The curated feature set is suitable for small and middle deployments, and you shouldn't feel obligated to use this feature. However we understand that this tool wouldn't be useful if you couldn't customize it when you are ready for it.
+## Smart Contract Management
 
-## Learn More
+### Deploy Contract
+\`\`\`bash
+cd contracts
+npm run deploy
+\`\`\`
 
-You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
+### Fund Contract with Tokens
+\`\`\`bash
+cd contracts
+npm run mint
+\`\`\`
 
-To learn React, check out the [React documentation](https://reactjs.org/).
+### Additional Funding
+\`\`\`bash
+cd contracts
+npm run fund
+\`\`\`
 
-### Code Splitting
+## Contract Details
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/code-splitting](https://facebook.github.io/create-react-app/docs/code-splitting)
+- Token Name: TokenTap
+- Symbol: TAP
+- Tokens per Request: 100 TAP
+- Cooldown Period: 1 hour
+- Network: Holesky Testnet (Chain ID: 17000)
 
-### Analyzing the Bundle Size
+## Frontend Development
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size](https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size)
+1. Start the development server:
+   \`\`\`bash
+   npm run dev
+   \`\`\`
 
-### Making a Progressive Web App
+2. Build for production:
+   \`\`\`bash
+   npm run build
+   \`\`\`
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app](https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app)
+## Testing
 
-### Advanced Configuration
+Run smart contract tests:
+\`\`\`bash
+cd contracts
+npm test
+\`\`\`
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/advanced-configuration](https://facebook.github.io/create-react-app/docs/advanced-configuration)
+## Contributing
 
-### Deployment
+1. Fork the repository
+2. Create your feature branch
+3. Commit your changes
+4. Push to the branch
+5. Create a new Pull Request
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/deployment](https://facebook.github.io/create-react-app/docs/deployment)
+## Security
 
-### `npm run build` fails to minify
+- The contract includes cooldown periods to prevent abuse
+- Owner-only functions for minting and management
+- Standard OpenZeppelin contracts for security
+- Please report any security issues to [security contact]
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify](https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify)
+## License
+
+This project is licensed under the MIT License - see the LICENSE file for details.
+
+## Acknowledgments
+
+- OpenZeppelin for secure contract implementations
+- Ethereum community for tools and documentation
+- Holesky testnet team
